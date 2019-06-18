@@ -196,6 +196,46 @@ func GetH5PaySign(appId, nonceStr, prepayId, signType, timeStamp, apiKey string)
 	return
 }
 
+//APP支付，统一下单获取支付参数后，再次计算APP支付所需要的的sign
+//    signType：此处签名方式，务必与统一下单时用的签名方式一致
+func GetAppPaySign(appid, partnerid, noncestr, prepayid, signType, timestamp, apiKey string) (paySign string) {
+	buffer := new(bytes.Buffer)
+	buffer.WriteString("appid=")
+	buffer.WriteString(appid)
+
+	buffer.WriteString("&noncestr=")
+	buffer.WriteString(noncestr)
+
+	buffer.WriteString("&package=Sign=WXPay")
+
+	buffer.WriteString("&partnerid=")
+	buffer.WriteString(partnerid)
+
+	buffer.WriteString("&prepayid=")
+	buffer.WriteString(prepayid)
+
+	buffer.WriteString("&timestamp=")
+	buffer.WriteString(timestamp)
+
+	buffer.WriteString("&key=")
+	buffer.WriteString(apiKey)
+
+	signStr := buffer.String()
+
+	var hashSign []byte
+	if signType == SignType_MD5 {
+		hash := md5.New()
+		hash.Write([]byte(signStr))
+		hashSign = hash.Sum(nil)
+	} else {
+		hash := hmac.New(sha256.New, []byte(apiKey))
+		hash.Write([]byte(signStr))
+		hashSign = hash.Sum(nil)
+	}
+	paySign = strings.ToUpper(hex.EncodeToString(hashSign))
+	return
+}
+
 //解密开放数据
 //    encryptedData:包括敏感数据在内的完整用户信息的加密数据
 //    iv:加密算法的初始向量
